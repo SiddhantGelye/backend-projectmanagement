@@ -1,0 +1,19 @@
+{
+  "name": "projectmanagementnew",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "keywords": [
+    "API",
+    "backend"
+  ],
+  "author": "Siddhant",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "prettier": "3.8.1"
+  }
+}
