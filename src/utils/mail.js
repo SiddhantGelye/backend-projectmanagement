@@ -1,16 +1,15 @@
 import Mailgen from "mailgen";
 
-const emailVerificationMailGenerator = async(username, verificationURL)=>{
-
+const emailVerificationMailGenContent = async(username, verificationURL)=>{
     return {
         body:{
             name : username,
             intro : "Welcome to our app we are exited to have you on board",
             action : {
-                instructions:"To get Started with Our app please click on the link below for verification",
+                instructions:"To verify your email please click the button below",
                 button: {
                     color : "#aaa",
-                    text : " Verifi My Account",
+                    text : " Verify My Account",
                     link: verificationURL
                 }
             } ,
@@ -20,8 +19,7 @@ const emailVerificationMailGenerator = async(username, verificationURL)=>{
 
 }
 
-const forgotPasswordMailGenerator = async(username, passwordChangeURL)=>{
-
+const forgotPasswordMailGenContent = async(username, passwordChangeURL)=>{
     return {
         body:{
             name : username,
@@ -50,16 +48,16 @@ const sendEmail = async(options) => {
         }
     })
 
-    const emailTextual = mailGenerator.generatePlaintext(options.mailgenContent);
+    const emailTextual = mailGenerator.generatePlaintext(options?.mailgenContent);
 
-    const emailHTML = mailGenerator.generate(options.mailgenContent);
+    const emailHTML = mailGenerator.generate(options?.mailgenContent);
     
     const transporter = nodemailer.createTransport({
         host: process.env.MAILTRAP_SMTP_HOST,
         port: process.env.MAILTRAP_SMTP_PORT,
         auth:{
             user: process.env.MAILTRAP_SMTP_USER,
-            pass: MAILTRAP_SMTP_PASS
+            pass: process.env.MAILTRAP_SMTP_PASS
         }
     })
 
@@ -75,13 +73,12 @@ const sendEmail = async(options) => {
         await transporter.sendMail(mail)
     }
     catch(err){
-        console.log("Email sending service failed")
-        console.log("Error", err)
+        console.error("Email sending service failed")
+        console.error("Error", err)
     }
-    
 }
 
-export { emailVerificationMailGenerator,
-         forgotPasswordMailGenerator, 
+export { emailVerificationMailGenContent,
+         forgotPasswordMailGenContent, 
          sendEmail
        }

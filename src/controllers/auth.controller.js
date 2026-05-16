@@ -2,7 +2,7 @@ import {User} from "../models/user.model.js";
 import ApiResponse from "../utils/api-response.js";
 import ApiError from "../utils/api-error.js";
 import {asyncHandler} from '../utils/asynchandler.js';
-import {emailVerificationMailGenerator, sendEmail} from "../utils/mail.js";
+import {emailVerificationMailGenContent, sendEmail} from "../utils/mail.js";
 
 const generateAccessAndRefreshToken = async(userId)=>{
     try{
@@ -38,8 +38,16 @@ const registerUser = asyncHandler(async(req, res)=>{
     user.emailVerificationToken = hashedToken;
     user.emailVerificationTokenExpiry = tokenExpiry; 
 
-    await user.save({validateBeforeSave : false})
-    console.log("User Created", user);
+    await user.save({validateBeforeSave : false});
+
+    // sending email to the user for email verification
+    sendEmail({
+        email: user?.email,
+        subject: "Email Verification",
+        mailgenContent: emailVerificationMailGenContent(user.username, 
+            `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${unHasedToken}`)
+    })
+    // console.log("User Created", user);
 
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken "
@@ -49,7 +57,7 @@ const registerUser = asyncHandler(async(req, res)=>{
     }
     return res.status(201)
     .json(
-        new ApiResponse(201, 'User Registered', createdUser)
+        new ApiResponse(201, {user : createdUser}, "User registered successfully. Please check your email to verify your account")
     )
 })
 
