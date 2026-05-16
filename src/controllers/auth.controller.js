@@ -9,7 +9,6 @@ const generateAccessAndRefreshToken = async(userId)=>{
         const user = await User.findById(userId);
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
-
         user.refreshToken = refreshToken;
         await user.save({validateBeforeSave: false});
         return {accessToken, refreshToken}
@@ -26,8 +25,6 @@ const registerUser = asyncHandler(async(req, res)=>{
         $or : [{username}, {email}]
     })
 
-    console.log(existingUser);
-
     if(existingUser){
         throw new ApiError(401, "user Already Exist");
     }
@@ -39,7 +36,7 @@ const registerUser = asyncHandler(async(req, res)=>{
     const {unHasedToken, hashedToken, tokenExpiry} = await user.generateTempToken();
 
     user.emailVerificationToken = hashedToken;
-    user.emailVerificationTokenExpiry = tokenExpiry;
+    user.emailVerificationTokenExpiry = tokenExpiry; 
 
     await user.save({validateBeforeSave : false})
     console.log("User Created", user);
@@ -56,9 +53,50 @@ const registerUser = asyncHandler(async(req, res)=>{
     )
 })
 
-// const loginUser = asyncHander(async(req, res)=>{
-//     const {email, password} = req.body;
+const loginUser = asyncHandler(async(req, res)=>{
+    const {email, password, username} = req.body;
+    if(!email){
+        throw new ApiError(400, "Email is required")
+    }
+    const user = await User.findOne({email});
+    if(!user){
+        throw new ApiError(401, "User does not exist")
+    }
 
-// })
+    
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    
+    if(!isPasswordValid){
+        throw new ApiError(400, "Invalid credentials");
+    }
 
-export {registerUser};
+    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id);
+
+    const loggedInUser = await User.findById(user._id).select(
+        "-password -refreshToken "
+    )
+
+    //settings the acccess token and refresh token in cookies 
+    //cookies required options so we will send the options to the i.e it is just a object
+    
+    const options = {
+        httpOnly : true, // this will be secure cookies
+        secure: true // only browser can manipute this cookies 
+    }
+
+    // as the options is ready we are ready to send and set the cookies 
+    return res.status(200)
+              .cookie("accessToken", accessToken, options)  // here we set the cookies 
+              .cookie("refreshToken", refreshToken, options) // here we set the cookies
+              .json(new ApiResponse(
+                200, 
+                {
+                    user : loggedInUser,
+                    accessToken, 
+                    refreshToken
+                },
+                "user loggin in Successfully"
+              ))
+})
+
+export {registerUser, loginUser};

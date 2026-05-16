@@ -43,7 +43,7 @@ const userSchema = new Schema({
         type: Boolean,
         default: false
     },
-    refreshtoken: {
+    refreshToken: {
         type: String,
     },
     forgotPasswordToken: {  
@@ -70,43 +70,43 @@ const userSchema = new Schema({
 },{timestamps: true});
 
 
-userSchema.pre("save", async function(req, res, next){
+userSchema.pre("save", async function(next){
     if(!this.isModified("password")){
         return;
     }
-    this.password  = bcrypt.hash(this.password, 10);
+    this.password  = await bcrypt.hash(this.password, 10);
     // next();
 })
 
-userSchema.methods.isPasswordCorrect = async(password)=>{
-    return await bcrypt.compare(password, this.password);
+userSchema.methods.isPasswordCorrect = async function(userPassword){
+    return await bcrypt.compare(userPassword, this.password);
     // it will return booelan value as if password is correct or not 
 }
 
-userSchema.methods.generateAccessToken = async()=>{
+userSchema.methods.generateAccessToken =  function(){
     return jwt.sign(
         {
             _id : this._id,
             email: this.email,
             username : this.username
         },
-        PROCESS.ENV.ACCESS_TOKEN_SECRET,
-        {expiresIn : PROCESS.ENV.ACCESS_TOKEN_EXPIRY}
+        process.env.ACCESS_TOKEN_SECRET,
+        {expiresIn : process.env.ACCESS_TOKEN_EXPIRY}
     )   
 }
 
-userSchema.methods.generateRefreshToken= async()=>{
+userSchema.methods.generateRefreshToken=  function(){
     return jwt.sign(
         {
             _id : this._id,
         },
-        PROCESS.ENV.REFRESH_TOKEN_SECRET,
-        {expiresIn : PROCESS.ENV.REFRESH_TOKEN_EXPIRY}
+        process.env.REFRESH_TOKEN_SECRET,
+        {expiresIn : process.env.REFRESH_TOKEN_EXPIRY}
     )   
 }
 
 
-userSchema.methods.generateTempToken = async()=>{
+userSchema.methods.generateTempToken = async function(){
     const unHasedToken = crypto.randomBytes(20).toString('hex');
     const hasedToken = crypto.createHash('sha256')
                              .update(unHasedToken)
