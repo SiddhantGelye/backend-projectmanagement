@@ -4,6 +4,7 @@ import ApiError from "../utils/api-error.js";
 import {asyncHandler} from '../utils/asynchandler.js';
 import {emailVerificationMailGenContent, forgotPasswordMailGenContent, sendEmail} from "../utils/mail.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 const generateAccessAndRefreshToken = async(userId)=>{
     try{
@@ -31,15 +32,15 @@ const registerUser = asyncHandler(async(req, res)=>{
     }
 
     const user = await User.create({
-        email, password, username, role, isEmailVerified:false
+        email, password, username, role, isEmailVarified:false
     })
 
-    const {unHasedToken, hashedToken, tokenExpiry} = await user.generateTempToken();
+    const {unHasedToken, hashedToken, tokenExpiry} = user.generateTempToken();
 
     user.emailVerificationToken = hashedToken;
     user.emailVerificationTokenExpiry = tokenExpiry; 
-
-    await user.save({validateBeforeSave : false});
+    const updatedUser = await user.save({validateBeforeSave:false});
+    console.log("updated user with email verification token", updatedUser )
 
     // sending email to the user for email verification
     await sendEmail({
@@ -137,18 +138,23 @@ const getCurrentUser = asyncHandler(async(req,res)=>{
 })
 
 const verifyemail = asyncHandler(async(req, res)=>{
-    const verificationToken = req.params;
+    const {verificationToken} = req.params;
+    console.log(verificationToken)
     if(!verificationToken){
         throw new ApiError(400, "Verification token is missing");
     }
     // console.log(verificationToken);
-    let hashedToken = crypto.createHash("sha256").update(verificationToken)
+    let hashedToken = crypto
+                        .createHash("sha256")
+                        .update(verificationToken)
                         .digest("hex");
 
     const user = await User.findOne({
-        verificationToken :hashedToken,
+        emailVerificationToken :hashedToken,
         emailVerificationTokenExpiry : {$gt : Date.now()}
     })
+
+    // console.log(user);
 
     if(!user){
         throw new ApiError(400, "Token is invalid or expired");
@@ -261,7 +267,7 @@ const forgotPasswordRequest= asyncHandler(async(req, res)=>{
     user.forgotPasswordToken = hasedToken;
     user.forgotPasswordTokenExpiry = tokenExpiry;
 
-    await User.save({validateBeforeSave:false});
+    await user.save({validateBeforeSave:false});
 
     await sendEmail({
         email: user?.email,
@@ -279,7 +285,7 @@ const forgotPasswordRequest= asyncHandler(async(req, res)=>{
     ))
 })
 
-const resetForgotPassword=  asyncHandler(async()=>{
+const resetForgotPassword = asyncHandler(async()=>{
     const {resetToken} = req.params;
     const {newPassword} = req.body;
     
@@ -333,7 +339,8 @@ export {
     refreshAccessToken,
     forgotPasswordRequest,
     resetForgotPassword,
-    changeCurrentPassword
+    changeCurrentPassword,
+    getCurrentUser
 };
 
 

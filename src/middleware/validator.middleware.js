@@ -8,7 +8,7 @@ export const validate = (req, res, next)=>{
     }
     const extractedErrors = [];
     errors.array().map((err)=>{
-        extractedError.push(
+        extractedErrors.push(
             {
                 [err.path] : err.msg
             })

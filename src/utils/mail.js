@@ -41,7 +41,7 @@ const forgotPasswordMailGenContent = async(username, passwordChangeURL)=>{
 
 
 const sendEmail = async(options) => {
-    console.log(options)
+    // console.log(options)
     const mailGenerator = new Mailgen({
         theme: "default",
         product:{

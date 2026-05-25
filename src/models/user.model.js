@@ -54,6 +54,7 @@ const userSchema = new Schema({
     },
     emailVerificationToken: {
         type: String,
+        // default:""
     },
     emailVerificationTokenExpiry: {
         type: Date,
@@ -67,6 +68,8 @@ const userSchema = new Schema({
     //     type: Date,
     //     default: Date.now
     // }
+    
+    
 },{timestamps: true});
 
 
@@ -83,7 +86,7 @@ userSchema.methods.isPasswordCorrect = async function(userPassword){
     // it will return booelan value as if password is correct or not 
 }
 
-userSchema.methods.generateAccessToken =  function(){
+userSchema.methods.generateAccessToken =  async function(){
     return jwt.sign(
         {
             _id : this._id,
@@ -95,7 +98,7 @@ userSchema.methods.generateAccessToken =  function(){
     )   
 }
 
-userSchema.methods.generateRefreshToken=  function(){
+userSchema.methods.generateRefreshToken=  async function(){
     return jwt.sign(
         {
             _id : this._id,
